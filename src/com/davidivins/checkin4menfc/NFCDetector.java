@@ -19,6 +19,7 @@ package com.davidivins.checkin4menfc;
 import android.app.Activity;
 import android.content.Intent;
 import android.nfc.NdefMessage;
+import android.nfc.NdefRecord;
 import android.nfc.NfcAdapter;
 import android.os.Bundle;
 import android.util.Log;
@@ -45,26 +46,44 @@ public class NFCDetector extends Activity
 	public void handleIntent(Intent intent) 
 	{
 		String action = intent.getAction();
+		NdefMessage[] msgs = null;
 		
-		if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(action)) 
+		if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(action) ||
+				NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action) ||
+				NfcAdapter.ACTION_TECH_DISCOVERED.equals(action)) 
 		{
-			// read TagTechnology object...
 			Log.i(TAG, "Found Tag");
-			NdefMessage[] msgs = NFCUtils.getNdefMessages(intent);
+			
+			msgs = NFCUtils.getNdefMessages(intent);
 			NFCUtils.dumpMessages(msgs);
+			
+			if (msgs.length > 0)
+			{
+				NdefRecord[] records = msgs[0].getRecords();
+				
+				if (records.length > 0)
+				{
+					//String id = new String(records[0].getId());
+					//String type = new String(records[0].getType());
+					String payload = new String(records[0].getPayload());
+				
+					Intent checkin4me = new Intent("com.davidivins.checkin4me.action.NFC");
+					checkin4me.putExtra("url", "http://" + payload);
+//		        checkin4me.setPackage("com.davidivins.checkin4me.debug");
+//		        //checkin4me.putExtra("SCAN_MODE", "QR_CODE_MODE");
+					startActivityForResult(checkin4me, 0);
+				
+//				Intent intent = new Intent();
+//				intent.setComponent(new ComponentName("com.davidivins.checkin4me.debug", "com.example.MyExampleActivity"));
+//				startActivity(intent)
+				}
+			}
 		}
-		else if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)) 
+		else
 		{
-			// read NDEF message...
-			Log.i(TAG, "Found Ndef");
-			NdefMessage[] msgs = NFCUtils.getNdefMessages(intent);
-			NFCUtils.dumpMessages(msgs);
-		} 
-		else if (NfcAdapter.ACTION_TECH_DISCOVERED.equals(action)) 
-		{
-			Log.i(TAG, "Found Tech");
-			NdefMessage[] msgs = NFCUtils.getNdefMessages(intent);
-			NFCUtils.dumpMessages(msgs);
-	    }
+			Intent main = new Intent(this, CheckIn4MeNFCAddOn.class);
+	        startActivity(main);
+		}
+
 	}
 }
