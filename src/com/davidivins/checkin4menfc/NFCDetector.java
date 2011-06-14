@@ -66,11 +66,12 @@ public class NFCDetector extends Activity
 					//String id = new String(records[0].getId());
 					//String type = new String(records[0].getType());
 					String payload = new String(records[0].getPayload());
-				
+				Log.i(TAG, "payload = " + payload);
 					Intent checkin4me = new Intent("com.davidivins.checkin4me.action.NFC");
 					checkin4me.putExtra("url", "http://" + payload);
 //		        checkin4me.setPackage("com.davidivins.checkin4me.debug");
 //		        //checkin4me.putExtra("SCAN_MODE", "QR_CODE_MODE");
+
 					startActivityForResult(checkin4me, 0);
 				
 //				Intent intent = new Intent();
