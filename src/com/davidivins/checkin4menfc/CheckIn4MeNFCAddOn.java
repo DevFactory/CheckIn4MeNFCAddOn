@@ -39,6 +39,10 @@ import android.util.Log;
 /**
  * CheckIn4MeNFCAddOn
  * 
+ * Main activity for providing nfc functionality in CheckIn4Me.
+ * Reads an nfc tag and attempts to forward the data (if valid) to
+ * the main CheckIn4Me app.
+ * 
  * @author david ivins
  */
 public class CheckIn4MeNFCAddOn extends Activity
@@ -46,93 +50,115 @@ public class CheckIn4MeNFCAddOn extends Activity
 	private static final String TAG = "CheckIn4MeNFCAddOn";
 	private NfcAdapter adapter;
 	
-	private static final String[][] techList = new String[][] { new String[] { 
+	private static final String[][] techList = new String[][] { 
+		new String[] { 
 			NfcA.class.getName(),
-            NfcB.class.getName(), NfcF.class.getName(),
-            NfcV.class.getName(), IsoDep.class.getName(),
-            MifareClassic.class.getName(),
-            MifareUltralight.class.getName(), Ndef.class.getName() } };
+			NfcB.class.getName(), 
+			NfcF.class.getName(),
+			NfcV.class.getName(), 
+			IsoDep.class.getName(),
+			MifareClassic.class.getName(),
+			MifareUltralight.class.getName(), 
+			Ndef.class.getName() 
+		} 
+	};
 	
 	private PendingIntent pendingIntent;
 	private IntentFilter[] intentFiltersArray;
 	
+	/**
+	 * onCreate
+	 * 
+	 * executed at the creation of the activity.
+	 * 
+	 * @param bundle
+	 */
 	@Override
 	public void onCreate(Bundle bundle) 
 	{
 		super.onCreate(bundle);
 		this.setContentView(R.layout.main);
 		
+		Log.i(TAG, "reading pending intent");
+		
 		pendingIntent = PendingIntent.getActivity(this, 0, new Intent(this,
 			getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP), 0);
 		
-		IntentFilter tag = new IntentFilter(NfcAdapter.ACTION_TAG_DISCOVERED);
+		IntentFilter tag  = new IntentFilter(NfcAdapter.ACTION_TAG_DISCOVERED);
 		IntentFilter ndef = new IntentFilter(NfcAdapter.ACTION_NDEF_DISCOVERED);
 		IntentFilter tech = new IntentFilter(NfcAdapter.ACTION_TECH_DISCOVERED);
 		
+		// add data type to  ndef
 		try 
 		{
-			ndef.addDataType("*/*");
+			String mine_type = "*/*";
+			
+			if (null != ndef)
+				ndef.addDataType(mine_type);
+			
+			if (null != tech)
+				tech.addDataType(mine_type);
 		} 
 		catch (MalformedMimeTypeException e) 
 		{
-			throw new RuntimeException("fail", e);
-		}
-		
-		try 
-		{
-			tech.addDataType("*/*");
-		} 
-		catch (MalformedMimeTypeException e) 
-		{
-			throw new RuntimeException("fail", e);
+			throw new RuntimeException("invalid mine-type", e);
 		}
 		
 		intentFiltersArray = new IntentFilter[] { tag, ndef, tech };
 	}
 	
+	/**
+	 * onNewIntent
+	 * 
+	 * called when a new intent is matched to this activity.
+	 * 
+	 * @param intent
+	 */
 	@Override
 	public void onNewIntent(Intent intent) 
 	{
 		String action = intent.getAction();
 
-		if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(action)) 
+		// if this is an nfc action
+		if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action) ||
+			NfcAdapter.ACTION_TAG_DISCOVERED.equals(action)  ||
+			NfcAdapter.ACTION_TECH_DISCOVERED.equals(action)) 
 		{
-			// read TagTechnology object...
 			Log.i(TAG, "Found Tag");
-			
-			NdefMessage[] msgs = NFCUtils.getNdefMessages(intent);
-			NFCUtils.dumpMessages(msgs);
-		}
-		else if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)) 
-		{
+
 			// read NDEF message...
-			Log.i(TAG, "Found Ndef");
 			NdefMessage[] msgs = NFCUtils.getNdefMessages(intent);
-			NFCUtils.dumpMessages(msgs);
-		} 
-		else if (NfcAdapter.ACTION_TECH_DISCOVERED.equals(action)) 
-		{
-			Log.i(TAG, "Found Tech");
-			NdefMessage[] msgs = NFCUtils.getNdefMessages(intent);
-			NFCUtils.dumpMessages(msgs);
-	    }
+			NFCUtils.dumpNdefMessages(msgs);
+		}
 	}
 	
+	/**
+	 * onResume
+	 * 
+	 * executed when this activity is resumed
+	 */
 	@Override
 	protected void onResume()
 	{
 		super.onResume();
 		
+		// enable foreground dispatch for nfc
 		NfcManager manager = (NfcManager)getSystemService(Context.NFC_SERVICE);
 		adapter = manager.getDefaultAdapter();
-		
 		adapter.enableForegroundDispatch(this, pendingIntent, intentFiltersArray, techList);
 	}
 	
+	/**
+	 * onPause
+	 * 
+	 * executed when this activity is paused.
+	 */
 	@Override
 	protected void onPause() 
 	{
 		super.onPause();
+		
+		// disable foreground dispatch for nfc
 		adapter.disableForegroundDispatch(this);
 	}
 }

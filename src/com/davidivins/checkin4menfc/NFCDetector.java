@@ -27,64 +27,74 @@ import android.util.Log;
 /**
  * NFCDetector
  * 
+ * activity that handle nfc-detection when the nfc add-on was not running in the foreground.
+ * 
  * @author david ivins
  */
 public class NFCDetector extends Activity
 {
 	private static final String TAG = "NFCDetector";
 
+	/**
+	 * onCreate
+	 * 
+	 * executed at the creation of the activity.
+	 * 
+	 * @param bundle
+	 */
 	@Override
 	public void onCreate(Bundle bundle) 
 	{
 		super.onCreate(bundle);
 		this.setContentView(R.layout.main);
-		Log.i(TAG, "NFC Detected");
+		Log.i(TAG, "NFC Detected!");
 		
 		handleIntent(getIntent());
 	}
 	
+	/**
+	 * handleIntent
+	 * 
+	 * handles the incoming nfc intent.
+	 * 
+	 * @param intent
+	 */
 	public void handleIntent(Intent intent) 
 	{
 		String action = intent.getAction();
-		NdefMessage[] msgs = null;
+		Log.i(TAG, "handling intent action = " + action);
 		
+		// only handle nfc-related intents
 		if (NfcAdapter.ACTION_TAG_DISCOVERED.equals(action) ||
-				NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action) ||
-				NfcAdapter.ACTION_TECH_DISCOVERED.equals(action)) 
+			NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action) ||
+			NfcAdapter.ACTION_TECH_DISCOVERED.equals(action)) 
 		{
 			Log.i(TAG, "Found Tag");
 			
-			msgs = NFCUtils.getNdefMessages(intent);
-			NFCUtils.dumpMessages(msgs);
+			NdefMessage[] msgs = NFCUtils.getNdefMessages(intent);
+			NFCUtils.dumpNdefMessages(msgs);
 			
-			if (msgs.length > 0)
+			// loop through each ndef message
+			for (int i = 0; i < msgs.length; i++)
 			{
-				NdefRecord[] records = msgs[0].getRecords();
-				
-				if (records.length > 0)
+				NdefRecord[] records = msgs[i].getRecords();
+			
+				// loop through each record in the current ndef message
+				for (int j = 0; j < records.length; j++)
 				{
-					//String id = new String(records[0].getId());
-					//String type = new String(records[0].getType());
-					String payload = new String(records[0].getPayload());
-				Log.i(TAG, "payload = " + payload);
-					Intent checkin4me = new Intent("com.davidivins.checkin4me.action.NFC");
-					checkin4me.putExtra("url", "http://" + payload);
-//		        checkin4me.setPackage("com.davidivins.checkin4me.debug");
-//		        //checkin4me.putExtra("SCAN_MODE", "QR_CODE_MODE");
+					// get type and payload of current record
+					String type = new String(records[j].getType());
+					Log.i(TAG, "type = " + type);
 
-					startActivityForResult(checkin4me, 0);
-				
-//				Intent intent = new Intent();
-//				intent.setComponent(new ComponentName("com.davidivins.checkin4me.debug", "com.example.MyExampleActivity"));
-//				startActivity(intent)
+					String payload = new String(records[j].getPayload());
+					Log.i(TAG, "payload = " + payload);
+					
+					// send to checkin4me app
+//					Intent checkin4me = new Intent("com.davidivins.checkin4me.action.NFC");
+//					checkin4me.putExtra("url", "http://" + payload);
+//					startActivityForResult(checkin4me, 0);
 				}
 			}
 		}
-		else
-		{
-			Intent main = new Intent(this, CheckIn4MeNFCAddOn.class);
-	        startActivity(main);
-		}
-
 	}
 }
