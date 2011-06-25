@@ -47,7 +47,7 @@ import android.util.Log;
  */
 public class CheckIn4MeNFCAddOn extends Activity
 {
-	private static final String TAG = "CheckIn4MeNFCAddOn";
+	private static final String TAG = CheckIn4MeNFCAddOn.class.getName();
 	private NfcAdapter adapter;
 	
 	private static final String[][] techList = new String[][] { 

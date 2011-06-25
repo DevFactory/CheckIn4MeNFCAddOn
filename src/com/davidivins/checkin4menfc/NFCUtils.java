@@ -32,7 +32,7 @@ import android.util.Log;
  */
 public class NFCUtils 
 {
-	private static final String TAG = "NFCUtils";
+	private static final String TAG = NFCUtils.class.getName();
 	
 	/**
 	 * getNdefMessages

@@ -33,7 +33,7 @@ import android.util.Log;
  */
 public class NFCDetector extends Activity
 {
-	private static final String TAG = "NFCDetector";
+	private static final String TAG = NFCDetector.class.getName();
 
 	/**
 	 * onCreate
@@ -90,9 +90,9 @@ public class NFCDetector extends Activity
 					Log.i(TAG, "payload = " + payload);
 					
 					// send to checkin4me app
-//					Intent checkin4me = new Intent("com.davidivins.checkin4me.action.NFC");
-//					checkin4me.putExtra("url", "http://" + payload);
-//					startActivityForResult(checkin4me, 0);
+					Intent checkin4me = new Intent("com.davidivins.checkin4me.action.NFC");
+					checkin4me.putExtra("url", "http://" + payload);
+					startActivityForResult(checkin4me, 0);
 				}
 			}
 		}
